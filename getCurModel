@@ -1,0 +1,31 @@
+void GetCurModelPath(char *strip)
+{
+	char szFileName[_MAX_PATH];
+	char strFileName[_MAX_PATH];
+	::GetModuleFileNameA(NULL, szFileName, sizeof(szFileName));
+
+	char drive[_MAX_DRIVE];
+	char dir[_MAX_DIR];
+	char fname[_MAX_FNAME];
+	char ext[_MAX_EXT];
+	_splitpath(szFileName, drive, dir, fname, ext);
+
+	sprintf(strFileName, "%s%sfilename.txt", drive, dir);
+
+	//char buffer[16];
+	FILE *fp;
+	fp = fopen(strFileName, "r");
+	if (!fp)
+		PRT_MSG("File could not be opened! \n");
+	int i = 0;
+	char ch = fgetc(fp);
+	while (ch != '\n' && !feof(fp))
+	{
+		*(strip + i) = ch;
+		i++;
+		ch = fgetc(fp);
+	}
+	*(strip + i) = '\0';
+	//getline(buffer,sizeof(buffer));
+
+}
