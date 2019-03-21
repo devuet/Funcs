@@ -1,0 +1,68 @@
+DWORD GetProcessIdFromName(const wchar_t * name)
+{
+	PROCESSENTRY32 pe;
+	DWORD id = 0;
+
+	HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+	pe.dwSize = sizeof(PROCESSENTRY32);
+
+	if (!Process32First(hSnapshot, &pe))
+		return 0;
+	do
+	{
+		pe.dwSize = sizeof(PROCESSENTRY32);
+		if (Process32Next(hSnapshot, &pe) == FALSE)
+			//break;
+			return 0;
+
+		if (wcscmp(pe.szExeFile, name) == 0)
+		{
+			id = pe.th32ProcessID;
+			break;
+		}
+
+	} while (TRUE);
+	CloseHandle(hSnapshot);
+	return id;
+}
+
+void KillServer()
+{
+	HANDLE hToken;
+	if (OpenProcessToken(GetCurrentProcess(), TOKEN_ALL_ACCESS, &hToken))
+	{
+		//OpenProcess(GetCurrentProcess(),);
+		LUID luid;
+		if (LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &luid))
+		{
+			TOKEN_PRIVILEGES TokenPrivileges;
+			TokenPrivileges.PrivilegeCount = 1;
+			TokenPrivileges.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+			TokenPrivileges.Privileges[0].Luid = luid;
+			AdjustTokenPrivileges(hToken, FALSE, &TokenPrivileges, 0, NULL, NULL);
+		}
+		CloseHandle(hToken);
+	}
+
+	const wchar_t Proname[] = L"roadlamp.exe";
+	if (GetProcessIdFromName(Proname) == 0)
+	{
+		printf("process has quit\n");
+	}
+	else
+	{
+		DWORD pid = GetProcessIdFromName(Proname); //找到server进程
+		HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, 0, pid);
+		TerminateProcess(hProcess, 0); //结束server进程
+	}
+}
+
+void CreateServer(){
+	char szCommandLine[] = "c:\\hxt\\roadlamp.exe";
+	HINSTANCE hNewExe = ShellExecuteA(NULL, "open", szCommandLine, NULL, NULL, SW_SHOW);
+	if((DWORD)hNewExe<=32){
+		printf("restart server falied! return value:%d\n", (DWORD)hNewExe);
+	}else{
+		printf("restart server success");
+	}
+}
